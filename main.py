@@ -11,11 +11,11 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.storage.memory import MemoryStorage
 from supabase import create_client
 
-# ===== НАСТРОЙКИ (ЗАМЕНИТЕ ТОКЕН) =====
-TELEGRAM_TOKEN = "8553072359:AAH-OjYeKSuOx4rPefhVWvAsYVYrYJFGi1o"   # ← ВСТАВЬТЕ ТОКЕН
+# ===== НАСТРОЙКИ (ЗАМЕНИТЕ ТОКЕН И ДАННЫЕ SUPABASE) =====
+TELEGRAM_TOKEN = "8553072359:AAH-OjYeKSuOx4rPefhVWvAsYVYrYJFGi1o"   # ← ВСТАВЬТЕ ТОКЕН (тот же, что у @YourStyleGuideBot)
 SUPABASE_URL = "https://jkmqigxiynvdgzlcmhil.supabase.co"
 SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImprbXFpZ3hpeW52ZGd6bGNtaGlsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Mzc2NDA4MywiZXhwIjoyMDg5MzQwMDgzfQ.o-Wkb2b_vS0-TTl6iFREE_FpKeBocpZPKlvn6bTJ9qU"
-# ========================================
+# ========================================================
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 bot = Bot(token=TELEGRAM_TOKEN)
@@ -32,13 +32,21 @@ class AddClothesStates(StatesGroup):
 def get_main_keyboard():
     kb = [
         [KeyboardButton(text="👗 Мой гардероб"), KeyboardButton(text="🤔 Что надеть?")],
-        [KeyboardButton(text="➕ Добавить вещь"), KeyboardButton(text="❓ Помощь")]
+        [KeyboardButton(text="➕ Добавить вещь"), KeyboardButton(text="🎨 Анализ стиля")],
+        [KeyboardButton(text="🧥 Назад к стилисту"), KeyboardButton(text="❓ Помощь")]
     ]
     return ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True)
 
 @dp.message(Command("start"))
 async def start(message: Message):
-    await message.answer("👋 Привет! Я бот для управления твоим гардеробом.\n\nДобавляй вещи, смотри гардероб, получай идеи образов.", reply_markup=get_main_keyboard())
+    # Проверяем, есть ли пользователь в Supabase (таблица users)
+    user_id = str(message.from_user.id)
+    resp = supabase.table('users').select('username, first_name').eq('user_id', user_id).execute()
+    if resp.data:
+        name = resp.data[0].get('first_name') or resp.data[0].get('username') or 'пользователь'
+        await message.answer(f"👋 Привет, {name}! Рад тебя видеть в своём гардеробе.\n\nДобавляй вещи, смотри гардероб, получай идеи образов.", reply_markup=get_main_keyboard())
+    else:
+        await message.answer("👋 Привет! Я бот для управления твоим гардеробом.\n\nДобавляй вещи, смотри гардероб, получай идеи образов.", reply_markup=get_main_keyboard())
 
 @dp.message(Command("help"))
 async def help_cmd(message: Message):
@@ -89,7 +97,6 @@ async def got_description(message: Message, state: FSMContext):
     file_info = await bot.get_file(photo_file_id)
     file_url = f"https://api.telegram.org/file/bot{TELEGRAM_TOKEN}/{file_info.file_path}"
 
-    # ИСПРАВЛЕНО: имя бакета – только латиница
     bucket_name = "wardrobe"
     file_name = f"{user_id}_{int(datetime.now().timestamp())}.jpg"
     try:
@@ -176,6 +183,35 @@ async def look(message: Message):
 @dp.message(Command("delete_clothes"))
 async def delete_cmd(message: Message):
     await message.answer("Используй кнопку «Удалить» под каждой вещью в разделе «Мой гардероб».")
+
+# ---- Кнопки навигации к основному боту ----
+@dp.message(F.text == "🧥 Назад к стилисту")
+async def back_to_stylist(message: Message):
+    await message.answer(
+        "👔 <b>Вернуться к AI-стилисту</b>\n\n"
+        "Нажми на ссылку, чтобы перейти к моему главному боту:\n"
+        "👉 [@stil_snap_ai_bot](https://t.me/stil_snap_ai_bot)\n\n"
+        "Там ты можешь проанализировать свой образ, получить оценку стиля и персональные советы.",
+        parse_mode="Markdown",
+        disable_web_page_preview=True,
+        reply_markup=get_main_keyboard()
+    )
+
+@dp.message(F.text == "🎨 Анализ стиля")
+async def style_analysis(message: Message):
+    await message.answer(
+        "🎨 <b>Анализ стиля</b>\n\n"
+        "Хочешь узнать, как улучшить свой образ? Перейди к главному боту-стилисту:\n"
+        "👉 [@stil_snap_ai_bot](https://t.me/stil_snap_ai_bot)\n\n"
+        "Отправь ему своё фото, и он оценит твой лук от 1 до 10, даст конкретные советы и порекомендует, где купить подходящие вещи.",
+        parse_mode="Markdown",
+        disable_web_page_preview=True,
+        reply_markup=get_main_keyboard()
+    )
+
+@dp.message(F.text == "❓ Помощь")
+async def help_button(message: Message):
+    await help_cmd(message)
 
 async def main():
     await dp.start_polling(bot)
