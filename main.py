@@ -5,13 +5,13 @@ from datetime import datetime
 from aiogram import Bot, Dispatcher, F
 from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 from aiogram.filters import Command
-from aiogram.fsm.state import State, StatesGroup
+from aiogram.fsm.state import State, StatesGroup  # <-- ИСПРАВЛЕННЫЙ ИМПОРТ
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.storage.memory import MemoryStorage
 from supabase import create_client
 
 # ===== НАСТРОЙКИ (ЗАМЕНИТЕ НА СВОИ) =====
-TELEGRAM_TOKEN = "ВАШ_ТОКЕН_НОВОГО_БОТА"  # ← ВСТАВЬТЕ ТОКЕН
+TELEGRAM_TOKEN = "8553072359:AAH-OjYeKSuOx4rPefhVWvAsYVYrYJFGi1o"  # ← ВСТАВЬТЕ ТОКЕН
 SUPABASE_URL = "https://jkmqigxiynvdgzlcmhil.supabase.co"
 SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImprbXFpZ3hpeW52ZGd6bGNtaGlsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Mzc2NDA4MywiZXhwIjoyMDg5MzQwMDgzfQ.o-Wkb2b_vS0-TTl6iFREE_FpKeBocpZPKlvn6bTJ9qU"
 # ========================================
@@ -28,7 +28,6 @@ class AddClothesStates(StatesGroup):
     waiting_type = State()
     waiting_description = State()
 
-# Клавиатуры
 def get_main_keyboard():
     kb = [
         [KeyboardButton(text="👗 Мой гардероб"), KeyboardButton(text="🤔 Что надеть?")],
