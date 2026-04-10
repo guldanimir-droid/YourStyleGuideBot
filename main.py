@@ -11,8 +11,8 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.storage.memory import MemoryStorage
 from supabase import create_client
 
-# ===== НАСТРОЙКИ (ЗАМЕНИТЕ НА СВОИ) =====
-TELEGRAM_TOKEN = "8553072359:AAH-OjYeKSuOx4rPefhVWvAsYVYrYJFGi1o"   # ← ВСТАВЬТЕ ТОКЕН
+# ===== НАСТРОЙКИ (ЗАМЕНИТЕ ТОКЕН) =====
+TELEGRAM_TOKEN = "ВАШ_ТОКЕН_НОВОГО_БОТА"   # ← ВСТАВЬТЕ ТОКЕН
 SUPABASE_URL = "https://jkmqigxiynvdgzlcmhil.supabase.co"
 SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImprbXFpZ3hpeW52ZGd6bGNtaGlsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Mzc2NDA4MywiZXhwIjoyMDg5MzQwMDgzfQ.o-Wkb2b_vS0-TTl6iFREE_FpKeBocpZPKlvn6bTJ9qU"
 # ========================================
@@ -74,7 +74,6 @@ async def got_type(message: Message, state: FSMContext):
     text = message.text
     clothing_type = None if text == "Пропустить" else text
     await state.update_data(clothing_type=clothing_type)
-    # ИСПРАВЛЕНА КЛАВИАТУРА: убран .from_button
     await message.answer("Теперь напиши описание (цвет, материал и т.д.) или 'Пропустить':",
                          reply_markup=ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text="Пропустить")]], resize_keyboard=True))
     await state.set_state(AddClothesStates.waiting_description)
@@ -90,8 +89,8 @@ async def got_description(message: Message, state: FSMContext):
     file_info = await bot.get_file(photo_file_id)
     file_url = f"https://api.telegram.org/file/bot{TELEGRAM_TOKEN}/{file_info.file_path}"
 
-    # Укажите точное имя вашего бакета в Supabase Storage (например, "Гардероб" или "wardrobe")
-    bucket_name = "Гардероб"  # ← ИСПРАВЬТЕ ПРИ НЕОБХОДИМОСТИ
+    # ИСПРАВЛЕНО: имя бакета – только латиница
+    bucket_name = "wardrobe"
     file_name = f"{user_id}_{int(datetime.now().timestamp())}.jpg"
     try:
         async with aiohttp.ClientSession() as session:
